@@ -21,18 +21,18 @@ type AuthServiceServer struct {
 func (S *AuthServiceServer) Register(ctx context.Context, req *auth.RegisterRequest) (*auth.AuthResponse, error) {
 
 	var userCount int64
-	err := S.DB.Model(&models.User{}).Where("user_name = ?",req.Username).Count(&userCount).Error
-	if err != nil{
+	err := S.DB.Model(&models.User{}).Where("user_name = ?", req.Username).Count(&userCount).Error
+	if err != nil {
 		return &auth.AuthResponse{
 			Message: "Failed to check user existence",
 			Success: false,
-		},err
+		}, err
 	}
-	if userCount > 0{
+	if userCount > 0 {
 		return &auth.AuthResponse{
 			Message: "Username already exists",
 			Success: false,
-		},nil
+		}, nil
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
@@ -48,7 +48,7 @@ func (S *AuthServiceServer) Register(ctx context.Context, req *auth.RegisterRequ
 		Password: string(hashedPassword),
 	}
 
-	if err := db.Create(user).Error; err != nil {
+	if err := S.DB.Create(user).Error; err != nil {
 		return &auth.AuthResponse{
 			Message: "Falied to register user",
 			Success: false,
@@ -64,7 +64,7 @@ func (S *AuthServiceServer) Register(ctx context.Context, req *auth.RegisterRequ
 
 func (S *AuthServiceServer) Login(ctx context.Context, req *auth.LoginRequest) (*auth.AuthResponse, error) {
 
-	user, err := findUserbyUsername(req.Username)
+	user, err := findUserbyUsername(S.DB,req.Username)
 
 	if err != nil {
 		return &auth.AuthResponse{
@@ -96,14 +96,12 @@ func (S *AuthServiceServer) Login(ctx context.Context, req *auth.LoginRequest) (
 	}, nil
 }
 
-// func (s *AuthServiceServer) ValidateToken(ctx context.Context, req *auth.ValidateTokenRequest)(*auth.AuthResponse,error){
 
-// }
 
-func findUserbyUsername(username string) (*models.User, error) {
+func findUserbyUsername(db *gorm.DB,username string) (*models.User, error) {
 	var user models.User
 
-	if err := db.Where("username = ?", username).First(&user).Error; err != nil {
+	if err := db.Where("user_name = ?", username).First(&user).Error; err != nil {
 		return nil, fmt.Errorf("user not found: %v", err)
 	}
 	return &user, nil

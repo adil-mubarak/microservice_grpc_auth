@@ -10,16 +10,15 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"gorm.io/gorm"
 )
 
-var db *gorm.DB
+// var db *gorm.DB
 
 func main() {
 	var err error
-	db,err = database.ConnectDatabase()
-	if err != nil{
-		log.Fatalf("Failed to connect to the database: %v",err)
+	db, err := database.ConnectDatabase()
+	if err != nil {
+		log.Fatalf("Failed to connect to the database: %v", err)
 	}
 
 	server := grpc.NewServer()
